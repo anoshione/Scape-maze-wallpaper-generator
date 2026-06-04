@@ -1,0 +1,6 @@
+{
+  "name": "Scape Wallpaper",
+  "description": "A beautiful mathematical grid wallpaper generator with interactive light streams and responsive layout controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
