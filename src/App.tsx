@@ -169,6 +169,7 @@ export default function App() {
 
   // Wall state
   const [wallColor, setWallColor] = useState("#525252");
+  const [bgColor, setBgColor] = useState("#0a0a0c");
   const [lineWidth, setLineWidth] = useState(1.5);
   const [density, setDensity] = useState(35);
 
@@ -178,6 +179,7 @@ export default function App() {
   const [accentPalette, setAccentPalette] = useState<string[]>(["#ff0055", "#00ffcc", "#ffeb3b", "#39ff14"]);
   const [accentPaletteName, setAccentPaletteName] = useState("Neon Rainbow");
   const [glowIntensity, setGlowIntensity] = useState(4);
+  const [glowSpread, setGlowSpread] = useState(0.4);
   const [showGlow, setShowGlow] = useState(false);
 
   // Collapsible box section expanded states (collapsed by default)
@@ -291,7 +293,7 @@ export default function App() {
 
       // Draw background gradient
       if (!gradientEnabled) {
-        ctx.fillStyle = '#0a0a0c';
+        ctx.fillStyle = bgColor;
       } else if (gradientType === 'radial') {
         const rcx = (radialCenterX / 100) * width;
         const rcy = (radialCenterY / 100) * height;
@@ -464,6 +466,7 @@ export default function App() {
 
         // Overlay base bloom blur path if glow is toggled
         if (showGlow) {
+          // Pass 1: Outer wide soft bloom
           walls.forEach(w => {
             const p1 = projectPoint(getX(w.x1), getY(w.y1));
             const p2 = projectPoint(getX(w.x2), getY(w.y2));
@@ -472,6 +475,8 @@ export default function App() {
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.shadowColor = color;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
 
             let f = 1;
             if (perspectiveActive) {
@@ -480,9 +485,41 @@ export default function App() {
               f = (f1 + f2) / 2;
             }
 
-            ctx.shadowBlur = glowIntensity * 1.5 * scaleMultiplier * f;
+            // Wider soft blur representing the outer glow area
+            ctx.shadowBlur = glowIntensity * glowSpread * scaleMultiplier * f * 3.5;
             ctx.strokeStyle = color;
-            ctx.lineWidth = exportLineWidth * 1.4 * f;
+            ctx.lineWidth = exportLineWidth * 1.6 * f;
+
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+            ctx.restore();
+          });
+
+          // Pass 2: Medium tight intense halo
+          walls.forEach(w => {
+            const p1 = projectPoint(getX(w.x1), getY(w.y1));
+            const p2 = projectPoint(getX(w.x2), getY(w.y2));
+
+            ctx.save();
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.shadowColor = color;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+
+            let f = 1;
+            if (perspectiveActive) {
+              const f1 = perspective / (perspective - p1.z);
+              const f2 = perspective / (perspective - p2.z);
+              f = (f1 + f2) / 2;
+            }
+
+            // Tighter intense blur close to the wire
+            ctx.shadowBlur = glowIntensity * glowSpread * scaleMultiplier * f * 1.2;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = exportLineWidth * 1.2 * f;
 
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
@@ -559,12 +596,14 @@ export default function App() {
     radialCenterY,
     gradientEnabled,
     wallColor,
+    bgColor,
     lineWidth,
     accentProbability,
     accentsEnabled,
     effectiveAccentProbability,
     accentPalette,
     glowIntensity,
+    glowSpread,
     showGlow,
     windowSize,
     hapticsEnabled,
@@ -608,6 +647,8 @@ export default function App() {
         scale3D={scale3D}
         perspectiveActive={perspectiveActive}
         gradientEnabled={gradientEnabled}
+        bgColor={bgColor}
+        glowSpread={glowSpread}
       />
 
       {/* Ambient background clicks overlay to bring editor back */}
@@ -683,7 +724,7 @@ export default function App() {
                     href="https://github.com/OngrassTech/scape"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-md font-bold text-white hover:text-indigo-300 px-3 py-1.5 rounded-xl border border-zinc-700/60 bg-zinc-800 hover:bg-zinc-750 active:scale-95 transition-all shadow-sm leading-none inline-flex items-center"
+                    className="inline-flex items-center justify-center text-md font-bold text-white hover:text-indigo-300 h-8 px-3 rounded-xl border border-zinc-700/60 bg-zinc-800 hover:bg-zinc-750 active:scale-95 transition-all shadow-sm leading-none"
                   >
                     Scape
                   </a>
@@ -696,7 +737,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Grid Settings Section */}
+              {/* Maze Settings Section */}
               <div className="space-y-3">
                 <div 
                   onClick={() => {
@@ -708,14 +749,14 @@ export default function App() {
                 >
                   <div className="flex items-center gap-1.5 text-zinc-350 group-hover:text-white transition-colors">
                     <Sliders size={14} className="text-zinc-400 group-hover:text-white transition-colors" />
-                    <span className="text-xs font-semibold uppercase tracking-wider">Grid structure</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider">Maze structure</span>
                   </div>
                   <div className="flex items-center gap-2">
                     {gridExpanded && (
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleShuffle();
+                           handleShuffle();
                         }}
                         className="p-1 px-2 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white flex items-center gap-1 text-[10px] hover:bg-zinc-800 active:scale-95 transition-all"
                       >
@@ -733,10 +774,10 @@ export default function App() {
 
                 {/* Sizing grid elements sliders */}
                 {gridExpanded && (
-                  <div className="space-y-3 bg-white/[0.01] p-3.5 rounded-2xl border border-white/5">
+                  <div className="space-y-4 bg-white/[0.01] p-3.5 rounded-2xl border border-white/5">
                     <div>
                       <div className="flex justify-between items-center text-xs mb-1.5">
-                        <span className="text-zinc-400">Grid Wall Density / Cell Count</span>
+                        <span className="text-zinc-400">Maze density / Cell Count</span>
                         <span className="text-zinc-200 font-mono font-bold">{density} cols</span>
                       </div>
                       <input 
@@ -761,7 +802,7 @@ export default function App() {
                       <input 
                         type="range" 
                         min="0.5" 
-                        max="4.0" 
+                        max="15.0" 
                         step="0.1" 
                         value={lineWidth}
                         onChange={(e) => {
@@ -771,14 +812,23 @@ export default function App() {
                       />
                     </div>
 
-                    <div>
+                    <div className="space-y-4 pt-4 border-t border-white/5">
                       <CustomColorPicker
                         color={wallColor}
                         onChange={(newColor) => {
                           setWallColor(newColor);
                           setActivePreset(-1); // user customized
                         }}
-                        label="Main Grid Color"
+                        label="Maze Color"
+                      />
+                      
+                      <CustomColorPicker
+                        color={bgColor}
+                        onChange={(newColor) => {
+                          setBgColor(newColor);
+                          setActivePreset(-1); // user customized
+                        }}
+                        label="Background Color"
                       />
                     </div>
 
@@ -845,7 +895,7 @@ export default function App() {
                       <input 
                         type="range" 
                         min="0.02" 
-                        max="0.25" 
+                        max="0.75" 
                         step="0.01"
                         value={accentProbability}
                         onChange={(e) => {
@@ -878,21 +928,42 @@ export default function App() {
                     </div>
 
                     {showGlow && (
-                      <div>
-                        <div className="flex justify-between items-center text-xs mb-1.5">
-                          <span className="text-zinc-400">Glow Intensity</span>
-                          <span className="text-zinc-200 font-mono font-bold">{glowIntensity}px</span>
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex justify-between items-center text-xs mb-1.5">
+                            <span className="text-zinc-400">Glow Intensity</span>
+                            <span className="text-zinc-200 font-mono font-bold">{glowIntensity.toFixed(1)}px</span>
+                          </div>
+                          <input 
+                            type="range" 
+                            min="0.5" 
+                            max="30.0" 
+                            step="0.1"
+                            value={glowIntensity}
+                            onChange={(e) => {
+                              setGlowIntensity(Number(e.target.value));
+                            }}
+                            className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-400"
+                          />
                         </div>
-                        <input 
-                          type="range" 
-                          min="1" 
-                          max="9" 
-                          value={glowIntensity}
-                          onChange={(e) => {
-                            setGlowIntensity(Number(e.target.value));
-                          }}
-                          className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-400"
-                        />
+
+                        <div>
+                          <div className="flex justify-between items-center text-xs mb-1.5">
+                            <span className="text-zinc-400">Glow Spread / Softness</span>
+                            <span className="text-zinc-200 font-mono font-bold">{glowSpread.toFixed(2)}x</span>
+                          </div>
+                          <input 
+                            type="range" 
+                            min="0.10" 
+                            max="2.00" 
+                            step="0.05"
+                            value={glowSpread}
+                            onChange={(e) => {
+                              setGlowSpread(Number(e.target.value));
+                            }}
+                            className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-400"
+                          />
+                        </div>
                       </div>
                     )}
 
@@ -1258,42 +1329,7 @@ export default function App() {
 
                 {exportExpanded && (
                   <div className="space-y-3 bg-white/[0.01] p-3.5 rounded-2xl border border-white/5">
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {(windowSize.w < 640 ? [
-                        { l: "1080p", w: "1080", h: "2400" },
-                        { l: "2K", w: "1440", h: "3200" },
-                        { l: "4K", w: "1644", h: "3840" },
-                        { l: "3000²", w: "3000", h: "3000" },
-                        { l: "5000²", w: "5000", h: "5000" },
-                      ] : [
-                        { l: "1080p", w: "1920", h: "1080" },
-                        { l: "2K", w: "2560", h: "1440" },
-                        { l: "4K", w: "3840", h: "2160" },
-                        { l: "3000²", w: "3000", h: "3000" },
-                        { l: "5000²", w: "5000", h: "5000" },
-                      ]).map(preset => {
-                        const active = customWidth === preset.w && customHeight === preset.h;
-                        return (
-                          <button
-                            key={preset.l}
-                            type="button"
-                            onClick={() => {
-                              setCustomWidth(preset.w);
-                              setCustomHeight(preset.h);
-                            }}
-                            className={`flex-1 text-[10px] py-1 px-1.5 rounded-lg border text-center font-semibold transition-all ${
-                              active 
-                                ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/40 shadow-sm' 
-                                : 'bg-zinc-900/50 text-zinc-400 border-transparent hover:text-zinc-200'
-                            }`}
-                          >
-                            {preset.l}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <div className="text-[10px] text-zinc-500 block uppercase tracking-wider font-semibold mt-2 px-0.5 select-none">
+                    <div className="text-[10px] text-zinc-450 block uppercase tracking-wider font-bold mb-1 px-0.5 select-none">
                       Manually Input Size
                     </div>
 

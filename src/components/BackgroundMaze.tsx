@@ -31,6 +31,8 @@ interface BackgroundMazeProps {
   scale3D?: number;
   perspectiveActive?: boolean;
   gradientEnabled?: boolean;
+  bgColor?: string;
+  glowSpread?: number;
 }
 
 export function BackgroundMaze({
@@ -62,6 +64,8 @@ export function BackgroundMaze({
   scale3D = 100,
   perspectiveActive = false,
   gradientEnabled = false,
+  bgColor = "#0a0a0c",
+  glowSpread = 0.4,
 }: BackgroundMazeProps) {
   const [windowSize, setWindowSize] = useState({ 
     w: (typeof window !== 'undefined' ? window.innerWidth : 800) || 800, 
@@ -164,7 +168,7 @@ export function BackgroundMaze({
   const backgroundStyle = useMemo(() => {
     if (!gradientEnabled) {
       return {
-        background: '#0a0a0c',
+        background: bgColor,
       };
     }
     const startStr = `${gradientStart} ${gradientStartStop}%`;
@@ -181,6 +185,7 @@ export function BackgroundMaze({
     };
   }, [
     gradientEnabled,
+    bgColor,
     gradientStart,
     gradientEnd,
     gradientMiddle,
@@ -243,8 +248,8 @@ export function BackgroundMaze({
           >
             <defs>
               {showGlow && (
-                <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation={glowIntensity * 0.4} result="coloredBlur"/>
+                <filter id="neon-glow" x="-100%" y="-100%" width="300%" height="300%">
+                  <feGaussianBlur stdDeviation={glowIntensity * glowSpread} result="coloredBlur"/>
                   <feMerge>
                     <feMergeNode in="coloredBlur" />
                     <feMergeNode in="SourceGraphic" />
