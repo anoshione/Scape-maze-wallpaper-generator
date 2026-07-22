@@ -82,6 +82,7 @@ interface CustomColorPickerProps {
   onChange: (newColor: string) => void;
   label?: string;
   className?: string;
+  isLightMode?: boolean;
 }
 
 const PALETTE_CATEGORIES = [
@@ -103,7 +104,8 @@ export function CustomColorPicker({
   color,
   onChange,
   label,
-  className = ""
+  className = "",
+  isLightMode = false,
 }: CustomColorPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputVal, setInputVal] = useState(color);
@@ -160,7 +162,7 @@ export function CustomColorPicker({
     <div className={`space-y-2 select-none ${className}`}>
       {/* Selector summary row */}
       <div className="flex items-center justify-between">
-        {label && <span className="text-zinc-400 text-xs font-medium">{label}</span>}
+        {label && <span className={`text-xs font-medium ${isLightMode ? 'text-slate-600' : 'text-zinc-400'}`}>{label}</span>}
         
         <button
           type="button"
@@ -170,12 +172,12 @@ export function CustomColorPicker({
           }}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all text-xs select-none ${
             isOpen 
-              ? 'bg-zinc-800 border-indigo-500/50 text-white shadow-inner shadow-indigo-500/5' 
-              : 'bg-zinc-900 border-white/5 text-zinc-300 hover:border-zinc-700 hover:text-white'
+              ? (isLightMode ? 'bg-indigo-50 border-indigo-500 text-indigo-950 font-semibold' : 'bg-zinc-800 border-indigo-500/50 text-white shadow-inner shadow-indigo-500/5') 
+              : (isLightMode ? 'bg-white border-slate-300 text-slate-800 hover:border-slate-400' : 'bg-zinc-900 border-white/5 text-zinc-300 hover:border-zinc-700 hover:text-white')
           }`}
         >
           <div 
-            className="w-4 h-4 rounded-full border border-white/10 shadow-sm"
+            className={`w-4 h-4 rounded-full border shadow-sm ${isLightMode ? 'border-slate-300' : 'border-white/10'}`}
             style={{ backgroundColor: color }}
           />
           <span className="font-mono text-[11px] uppercase tracking-wider">{color}</span>
@@ -184,16 +186,20 @@ export function CustomColorPicker({
       </div>
 
       {isOpen && (
-        <div className="bg-neutral-900 border border-white/10 rounded-2xl p-4.5 space-y-4 animate-fade-in shadow-xl relative z-10">
+        <div className={`border rounded-2xl p-4.5 space-y-4 animate-fade-in shadow-xl relative z-10 ${
+          isLightMode ? 'bg-white border-slate-200 text-slate-900' : 'bg-neutral-900 border-white/10 text-white'
+        }`}>
           
           {/* Header tabs controls and paste direct input code field */}
           <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between gap-2 bg-black/30 p-1 rounded-xl">
+            <div className={`flex items-center justify-between gap-2 p-1 rounded-xl ${isLightMode ? 'bg-slate-100' : 'bg-black/30'}`}>
               <button
                 type="button"
                 onClick={() => { vibrate('light'); setActiveTab('swatches'); }}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
-                  activeTab === 'swatches' ? 'bg-zinc-800 text-white shadow' : 'text-zinc-400 hover:text-white'
+                  activeTab === 'swatches' 
+                    ? (isLightMode ? 'bg-white text-slate-900 shadow' : 'bg-zinc-800 text-white shadow') 
+                    : (isLightMode ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-400 hover:text-white')
                 }`}
               >
                 <Grid size={12} />
@@ -203,7 +209,9 @@ export function CustomColorPicker({
                 type="button"
                 onClick={() => { vibrate('light'); setActiveTab('sliders'); }}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
-                  activeTab === 'sliders' ? 'bg-zinc-800 text-white shadow' : 'text-zinc-400 hover:text-white'
+                  activeTab === 'sliders' 
+                    ? (isLightMode ? 'bg-white text-slate-900 shadow' : 'bg-zinc-800 text-white shadow') 
+                    : (isLightMode ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-400 hover:text-white')
                 }`}
               >
                 <Sliders size={12} />
@@ -213,19 +221,21 @@ export function CustomColorPicker({
 
             {/* Direct exact Hex text entry */}
             <div className="space-y-1">
-              <label className="text-[10px] text-zinc-500 uppercase tracking-widest block font-semibold">Enter Exact HEX Color value</label>
+              <label className={`text-[10px] uppercase tracking-widest block font-semibold ${isLightMode ? 'text-slate-500' : 'text-zinc-500'}`}>Enter Exact HEX Color value</label>
               <div className="relative flex items-center">
-                <span className="absolute left-3 text-zinc-500 font-mono text-xs select-none">#</span>
+                <span className={`absolute left-3 font-mono text-xs select-none ${isLightMode ? 'text-slate-400' : 'text-zinc-500'}`}>#</span>
                 <input
                   type="text"
                   value={inputVal.replace(/^#/, '')}
                   onChange={(e) => handleHexChange(e.target.value)}
                   placeholder="FF0055"
                   maxLength={7}
-                  className="w-full bg-black/40 border border-white/5 pl-7 pr-3 py-1.5 rounded-xl font-mono text-xs text-white uppercase focus:border-indigo-500 focus:outline-none transition-colors"
+                  className={`w-full border pl-7 pr-3 py-1.5 rounded-xl font-mono text-xs uppercase focus:border-indigo-500 focus:outline-none transition-colors ${
+                    isLightMode ? 'bg-slate-50 border-slate-300 text-slate-900' : 'bg-black/40 border-white/5 text-white'
+                  }`}
                 />
                 <div 
-                  className="absolute right-2 w-5 h-5 rounded-md border border-white/10" 
+                  className={`absolute right-2 w-5 h-5 rounded-md border ${isLightMode ? 'border-slate-300' : 'border-white/10'}`} 
                   style={{ backgroundColor: color }}
                 />
               </div>

@@ -23,7 +23,9 @@ import {
   Laptop,
   Square,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 interface Preset {
@@ -167,9 +169,10 @@ export default function App() {
   const [radialCenterX, setRadialCenterX] = useState(50);
   const [radialCenterY, setRadialCenterY] = useState(50);
 
-  // Wall state
-  const [wallColor, setWallColor] = useState("#525252");
-  const [bgColor, setBgColor] = useState("#0a0a0c");
+  // Wall state & Light Mode Theme
+  const [wallColor, setWallColor] = useState("#1e293b");
+  const [bgColor, setBgColor] = useState("#f8fafc");
+  const [isLightMode, setIsLightMode] = useState(true);
   const [lineWidth, setLineWidth] = useState(1.5);
   const [density, setDensity] = useState(35);
 
@@ -186,7 +189,6 @@ export default function App() {
   const [gridExpanded, setGridExpanded] = useState(false);
   const [accentsExpanded, setAccentsExpanded] = useState(false);
   const [gradientExpanded, setGradientExpanded] = useState(false);
-  const [exportExpanded, setExportExpanded] = useState(true);
 
   // General App State (Permanently disabled as requested)
   const soundEnabled = false;
@@ -697,42 +699,88 @@ export default function App() {
             exit={{ opacity: 0, x: 120, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
-            className="absolute left-4 right-4 bottom-4 h-[65%] sm:h-auto sm:left-auto sm:right-4 sm:top-4 sm:bottom-4 w-auto sm:w-[380px] max-w-[calc(100vw-2rem)] bg-neutral-950/80 border border-white/10 rounded-[2.5rem] shadow-2xl flex flex-col z-20 overflow-hidden backdrop-blur-xl"
+            className={`absolute left-4 right-4 bottom-4 h-[65%] sm:h-auto sm:left-auto sm:right-4 sm:top-4 sm:bottom-4 w-auto sm:w-[380px] max-w-[calc(100vw-2rem)] rounded-[2.5rem] shadow-2xl flex flex-col z-20 overflow-hidden backdrop-blur-2xl border-[0.5px] transition-colors ${
+              isLightMode 
+                ? 'bg-white/70 text-slate-900 border-black/20 shadow-black/10' 
+                : 'bg-black/60 text-zinc-100 border-white/20 shadow-black/40'
+            }`}
           >
-            {/* Fixed Close/Eye Button on Top Right */}
-            <div className="absolute top-5 right-5 z-25">
-              <button 
-                onClick={() => {
-                  if (hapticsEnabled) vibrate('heavy');
-                  soundManager.play('swipe');
-                  setShowControls(false);
-                }}
-                className="p-1 px-2 rounded-lg border bg-zinc-900 border-zinc-800 text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white"
-                title="Hide menu editor"
-              >
-                <EyeOff size={13} strokeWidth={2.5} />
-              </button>
-            </div>
-
             {/* Scrollable Layout Content */}
-            <div className="flex-1 overflow-y-auto px-6 pt-6 py-5 space-y-6 scrollbar-thin scrollbar-thumb-zinc-800">
+            <div className={`flex-1 overflow-y-auto px-6 pt-6 pb-28 space-y-6 scrollbar-thin ${
+              isLightMode ? 'scrollbar-thumb-slate-300' : 'scrollbar-thumb-zinc-800'
+            }`}>
 
-              {/* Title & Promotion Subtext (Scrollable) */}
-              <div className="space-y-1.5 pr-8">
-                <div className="flex items-center text-md font-bold text-white select-none leading-none">
-                  <a
-                    href="https://github.com/OngrassTech/scape"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center text-md font-bold text-white hover:text-indigo-300 h-8 px-3 rounded-xl border border-zinc-700/60 bg-zinc-800 hover:bg-zinc-750 active:scale-95 transition-all shadow-sm leading-none"
-                  >
-                    Scape
-                  </a>
-                  <span className="leading-none ml-1 text-md font-bold text-white">Wallpaper</span>
+              {/* Title & Header Actions (Aligned in one row) */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center text-sm font-bold select-none leading-none">
+                    <a
+                      href="https://github.com/OngrassTech/scape"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center justify-center h-8 px-3 rounded-xl border-[0.5px] active:scale-95 transition-all shadow-sm text-xs font-bold ${
+                        isLightMode 
+                          ? 'bg-white/80 border-black/20 text-slate-900 hover:bg-white hover:text-indigo-600' 
+                          : 'bg-zinc-800/80 border-white/20 text-white hover:text-indigo-300 hover:bg-zinc-750'
+                      }`}
+                    >
+                      Scape
+                    </a>
+                    <span className={`leading-none ml-1.5 text-sm font-bold ${
+                      isLightMode ? 'text-slate-900' : 'text-white'
+                    }`}>
+                      Wallpaper
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (hapticsEnabled) vibrate('medium');
+                        soundManager.play('swipe');
+                        const nextLight = !isLightMode;
+                        setIsLightMode(nextLight);
+                        if (nextLight) {
+                          if (bgColor === "#0a0a0c" || bgColor === "#000000") setBgColor("#f8fafc");
+                          if (wallColor === "#525252" || wallColor === "#ffffff") setWallColor("#1e293b");
+                        } else {
+                          if (bgColor === "#f8fafc" || bgColor === "#ffffff") setBgColor("#0a0a0c");
+                          if (wallColor === "#1e293b" || wallColor === "#334155") setWallColor("#525252");
+                        }
+                      }}
+                      className={`w-8 h-8 rounded-xl border-[0.5px] transition-colors shadow-sm flex items-center justify-center shrink-0 ${
+                        isLightMode
+                          ? 'bg-white/80 border-black/20 text-slate-800 hover:bg-white'
+                          : 'bg-black/60 border-white/20 text-zinc-200 hover:bg-black/80 hover:text-white'
+                      }`}
+                      title={isLightMode ? "Switch to Dark Mode" : "Switch to Light Mode"}
+                    >
+                      {isLightMode ? <Sun size={14} strokeWidth={2.2} /> : <Moon size={14} strokeWidth={2.2} />}
+                    </button>
+
+                    <button 
+                      onClick={() => {
+                        if (hapticsEnabled) vibrate('heavy');
+                        soundManager.play('swipe');
+                        setShowControls(false);
+                      }}
+                      className={`w-8 h-8 rounded-xl border-[0.5px] transition-colors shadow-sm flex items-center justify-center shrink-0 ${
+                        isLightMode
+                          ? 'bg-white/80 border-black/20 text-slate-800 hover:bg-white'
+                          : 'bg-black/60 border-white/20 text-zinc-200 hover:bg-black/80 hover:text-white'
+                      }`}
+                      title="Hide menu editor"
+                    >
+                      <EyeOff size={14} strokeWidth={2.2} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Game Info Promotion Subtext directly below title with small lighter font, no separator */}
-                <div className="text-[9px] text-zinc-500 font-light leading-normal select-none px-0.5">
+                <div className={`text-[9px] font-light leading-normal select-none px-0.5 ${
+                  isLightMode ? 'text-slate-500' : 'text-zinc-500'
+                }`}>
                   Scape is my android game that i used to make this wallpaper website, download and play from the scape button above
                 </div>
               </div>
@@ -747,8 +795,10 @@ export default function App() {
                   }}
                   className="flex items-center justify-between cursor-pointer select-none group py-1"
                 >
-                  <div className="flex items-center gap-1.5 text-zinc-350 group-hover:text-white transition-colors">
-                    <Sliders size={14} className="text-zinc-400 group-hover:text-white transition-colors" />
+                  <div className={`flex items-center gap-1.5 transition-colors ${
+                    isLightMode ? 'text-slate-700 group-hover:text-slate-900' : 'text-zinc-350 group-hover:text-white'
+                  }`}>
+                    <Sliders size={14} className={isLightMode ? 'text-slate-500' : 'text-zinc-400'} />
                     <span className="text-xs font-semibold uppercase tracking-wider">Maze structure</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -758,27 +808,33 @@ export default function App() {
                           e.stopPropagation();
                            handleShuffle();
                         }}
-                        className="p-1 px-2 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white flex items-center gap-1 text-[10px] hover:bg-zinc-800 active:scale-95 transition-all"
+                        className={`p-1 px-2 rounded border flex items-center gap-1 text-[10px] active:scale-95 transition-all ${
+                          isLightMode 
+                            ? 'bg-slate-200 border-slate-300 text-slate-700 hover:text-slate-900 hover:bg-slate-300' 
+                            : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                        }`}
                       >
                         <RefreshCw size={10} className="animate-spin-hover" />
                         <span>Regen</span>
                       </button>
                     )}
                     {gridExpanded ? (
-                      <ChevronUp size={14} className="text-zinc-500 group-hover:text-zinc-300 transition-colors" />
+                      <ChevronUp size={14} className={isLightMode ? 'text-slate-500' : 'text-zinc-500'} />
                     ) : (
-                      <ChevronDown size={14} className="text-zinc-500 group-hover:text-zinc-300 transition-colors" />
+                      <ChevronDown size={14} className={isLightMode ? 'text-slate-500' : 'text-zinc-500'} />
                     )}
                   </div>
                 </div>
 
                 {/* Sizing grid elements sliders */}
                 {gridExpanded && (
-                  <div className="space-y-4 bg-white/[0.01] p-3.5 rounded-2xl border border-white/5">
+                  <div className={`space-y-4 p-3.5 rounded-2xl border ${
+                    isLightMode ? 'bg-white/80 border-slate-200 shadow-sm' : 'bg-white/[0.01] border-white/5'
+                  }`}>
                     <div>
                       <div className="flex justify-between items-center text-xs mb-1.5">
-                        <span className="text-zinc-400">Maze density / Cell Count</span>
-                        <span className="text-zinc-200 font-mono font-bold">{density} cols</span>
+                        <span className={isLightMode ? 'text-slate-600' : 'text-zinc-400'}>Maze density / Cell Count</span>
+                        <span className={`font-mono font-bold ${isLightMode ? 'text-slate-900' : 'text-zinc-200'}`}>{density} cols</span>
                       </div>
                       <input 
                         type="range" 
@@ -790,14 +846,16 @@ export default function App() {
                           setDensity(val);
                           if (hapticsEnabled && val % 5 === 0) vibrate('light');
                         }}
-                        className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                        className={`w-full h-1 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                          isLightMode ? 'bg-slate-200' : 'bg-zinc-800'
+                        }`}
                       />
                     </div>
 
                     <div>
                       <div className="flex justify-between items-center text-xs mb-1.5">
-                        <span className="text-zinc-400">Wall Wire Width</span>
-                        <span className="text-zinc-200 font-mono font-bold">{lineWidth} px</span>
+                        <span className={isLightMode ? 'text-slate-600' : 'text-zinc-400'}>Wall Wire Width</span>
+                        <span className={`font-mono font-bold ${isLightMode ? 'text-slate-900' : 'text-zinc-200'}`}>{lineWidth} px</span>
                       </div>
                       <input 
                         type="range" 
@@ -808,11 +866,13 @@ export default function App() {
                         onChange={(e) => {
                           setLineWidth(Number(e.target.value));
                         }}
-                        className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                        className={`w-full h-1 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                          isLightMode ? 'bg-slate-200' : 'bg-zinc-800'
+                        }`}
                       />
                     </div>
 
-                    <div className="space-y-4 pt-4 border-t border-white/5">
+                    <div className={`space-y-4 pt-4 border-t ${isLightMode ? 'border-slate-200' : 'border-white/5'}`}>
                       <CustomColorPicker
                         color={wallColor}
                         onChange={(newColor) => {
@@ -820,6 +880,7 @@ export default function App() {
                           setActivePreset(-1); // user customized
                         }}
                         label="Maze Color"
+                        isLightMode={isLightMode}
                       />
                       
                       <CustomColorPicker
@@ -829,6 +890,7 @@ export default function App() {
                           setActivePreset(-1); // user customized
                         }}
                         label="Background Color"
+                        isLightMode={isLightMode}
                       />
                     </div>
 
@@ -837,60 +899,48 @@ export default function App() {
               </div>
 
               {/* Scattered Wall Accents Highlight Option (Moved right below grid structure) */}
-              <div className="space-y-4 border-t border-white/5 pt-5">
+              <div className={`space-y-4 border-t pt-5 ${isLightMode ? 'border-slate-200' : 'border-white/5'}`}>
                 <div 
-                  onClick={() => {
-                    if (hapticsEnabled) vibrate('light');
-                    soundManager.play('swipe');
-                    setAccentsExpanded(prev => !prev);
-                  }}
-                  className="flex items-center justify-between cursor-pointer select-none group py-1"
+                  className="flex items-center justify-between py-1 select-none"
                 >
-                  <div className="flex items-center gap-1.5 text-zinc-350 group-hover:text-white transition-colors">
-                    <Layers size={14} className="text-zinc-400 group-hover:text-white transition-colors" />
+                  <div className={`flex items-center gap-1.5 ${isLightMode ? 'text-slate-700' : 'text-zinc-350'}`}>
+                    <Layers size={14} className={isLightMode ? 'text-slate-500' : 'text-zinc-400'} />
                     <span className="text-xs font-semibold uppercase tracking-wider">Accents</span>
                   </div>
                   
-                  {/* Chevron only */}
-                  <div className="flex items-center gap-3">
-                    {accentsExpanded ? (
-                      <ChevronUp size={14} className="text-zinc-500 group-hover:text-zinc-300 transition-colors" />
-                    ) : (
-                      <ChevronDown size={14} className="text-zinc-500 group-hover:text-zinc-300 transition-colors" />
-                    )}
-                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      if (hapticsEnabled) vibrate('medium');
+                      soundManager.play('swipe');
+                      const next = !accentsEnabled;
+                      setAccentsEnabled(next);
+                      setAccentsExpanded(next);
+                    }}
+                    className={`w-10 h-6 flex items-center rounded-full p-0.5 transition-all border ${
+                      accentsEnabled 
+                        ? 'bg-indigo-600 border-indigo-500' 
+                        : (isLightMode ? 'bg-slate-300 border-slate-400' : 'bg-zinc-800 border-zinc-700')
+                    }`}
+                    title={accentsEnabled ? "Disable Accents" : "Enable Accents"}
+                  >
+                    <div 
+                      className={`w-4 h-4 rounded-full shadow-sm transition-all bg-white ${
+                        accentsEnabled ? 'translate-x-4' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
                 </div>
 
-                {accentsExpanded && (
-                  <div className="space-y-4 bg-white/[0.01] p-3.5 rounded-2xl border border-white/5">
-                    {/* Toggle Highlighted Accents inside */}
-                    <div className="flex items-center justify-between pb-3 border-b border-white/5">
-                      <span className="text-xs text-zinc-400">Highlighted accents</span>
-                      <button 
-                        type="button"
-                        onClick={() => {
-                          if (hapticsEnabled) vibrate('medium');
-                          soundManager.play('swipe');
-                          setAccentsEnabled(prev => !prev);
-                        }}
-                        className={`w-10 h-6 flex items-center rounded-full p-0.5 transition-all border ${
-                          accentsEnabled ? 'bg-indigo-500 border-indigo-400' : 'bg-zinc-800 border-zinc-700'
-                        }`}
-                        title={accentsEnabled ? "Disable Highlights" : "Enable Highlights"}
-                      >
-                        <div 
-                          className={`w-4 h-4 rounded-full shadow-sm transition-all bg-white ${
-                            accentsEnabled ? 'translate-x-4' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-
+                {accentsEnabled && (
+                  <div className={`space-y-4 p-3.5 rounded-2xl border ${
+                    isLightMode ? 'bg-white/80 border-slate-200 shadow-sm' : 'bg-white/[0.01] border-white/5'
+                  }`}>
                     {/* Prob Slider */}
                     <div>
                       <div className="flex justify-between items-center text-xs mb-1.5">
-                        <span className="text-zinc-400">Accent Scattering</span>
-                        <span className="text-zinc-200 font-mono font-bold">{Math.round(accentProbability * 100)}%</span>
+                        <span className={isLightMode ? 'text-slate-600' : 'text-zinc-400'}>Accent Scattering</span>
+                        <span className={`font-mono font-bold ${isLightMode ? 'text-slate-900' : 'text-zinc-200'}`}>{Math.round(accentProbability * 100)}%</span>
                       </div>
                       <input 
                         type="range" 
@@ -901,13 +951,15 @@ export default function App() {
                         onChange={(e) => {
                           setAccentProbability(Number(e.target.value));
                         }}
-                        className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-400"
+                        className={`w-full h-1 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                          isLightMode ? 'bg-slate-200' : 'bg-zinc-800'
+                        }`}
                       />
                     </div>
 
                     {/* Accent glowing toggle */}
-                    <div className="flex items-center justify-between border-t border-white/5 pt-3">
-                      <span className="text-xs text-zinc-400">Accent Glow</span>
+                    <div className={`flex items-center justify-between border-t pt-3 ${isLightMode ? 'border-slate-200' : 'border-white/5'}`}>
+                      <span className={`text-xs ${isLightMode ? 'text-slate-600' : 'text-zinc-400'}`}>Accent Glow</span>
                       <button 
                         type="button"
                         onClick={() => {
@@ -916,7 +968,9 @@ export default function App() {
                           setShowGlow(!showGlow);
                         }}
                         className={`w-10 h-6 flex items-center rounded-full p-0.5 transition-all border ${
-                          showGlow ? 'bg-indigo-500 border-indigo-400' : 'bg-zinc-800 border-zinc-700'
+                          showGlow 
+                            ? 'bg-indigo-600 border-indigo-500' 
+                            : (isLightMode ? 'bg-slate-300 border-slate-400' : 'bg-zinc-800 border-zinc-700')
                         }`}
                       >
                         <div 
@@ -931,8 +985,8 @@ export default function App() {
                       <div className="space-y-4">
                         <div>
                           <div className="flex justify-between items-center text-xs mb-1.5">
-                            <span className="text-zinc-400">Glow Intensity</span>
-                            <span className="text-zinc-200 font-mono font-bold">{glowIntensity.toFixed(1)}px</span>
+                            <span className={isLightMode ? 'text-slate-600' : 'text-zinc-400'}>Glow Intensity</span>
+                            <span className={`font-mono font-bold ${isLightMode ? 'text-slate-900' : 'text-zinc-200'}`}>{glowIntensity.toFixed(1)}px</span>
                           </div>
                           <input 
                             type="range" 
@@ -943,14 +997,16 @@ export default function App() {
                             onChange={(e) => {
                               setGlowIntensity(Number(e.target.value));
                             }}
-                            className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-400"
+                            className={`w-full h-1 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                              isLightMode ? 'bg-slate-200' : 'bg-zinc-800'
+                            }`}
                           />
                         </div>
 
                         <div>
                           <div className="flex justify-between items-center text-xs mb-1.5">
-                            <span className="text-zinc-400">Glow Spread / Softness</span>
-                            <span className="text-zinc-200 font-mono font-bold">{glowSpread.toFixed(2)}x</span>
+                            <span className={isLightMode ? 'text-slate-600' : 'text-zinc-400'}>Glow Spread / Softness</span>
+                            <span className={`font-mono font-bold ${isLightMode ? 'text-slate-900' : 'text-zinc-200'}`}>{glowSpread.toFixed(2)}x</span>
                           </div>
                           <input 
                             type="range" 
@@ -961,15 +1017,17 @@ export default function App() {
                             onChange={(e) => {
                               setGlowSpread(Number(e.target.value));
                             }}
-                            className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-400"
+                            className={`w-full h-1 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                              isLightMode ? 'bg-slate-200' : 'bg-zinc-800'
+                            }`}
                           />
                         </div>
                       </div>
                     )}
 
                     {/* Neon Preset Palettes choice */}
-                    <div className="border-t border-white/5 pt-3">
-                      <span className="text-[10px] text-zinc-500 block mb-2 uppercase tracking-wider">Highlight Colors</span>
+                    <div className={`border-t pt-3 ${isLightMode ? 'border-slate-200' : 'border-white/5'}`}>
+                      <span className={`text-[10px] block mb-2 uppercase tracking-wider ${isLightMode ? 'text-slate-500' : 'text-zinc-500'}`}>Highlight Colors</span>
                       <div className="flex flex-wrap gap-1.5 mb-3">
                         {ACCENT_PALETTES.map(p => (
                           <button
@@ -977,8 +1035,8 @@ export default function App() {
                             onClick={() => selectPalette(p)}
                             className={`flex items-center gap-1 p-1 pr-2.5 rounded-lg border text-[10px] transition-colors ${
                               accentPaletteName === p.name 
-                                ? 'bg-zinc-800 text-white border-zinc-700' 
-                                : 'bg-zinc-900/50 text-zinc-400 border-transparent hover:text-zinc-300'
+                                ? (isLightMode ? 'bg-slate-200 text-slate-900 border-slate-300' : 'bg-zinc-800 text-white border-zinc-700') 
+                                : (isLightMode ? 'bg-slate-100 text-slate-600 border-transparent hover:text-slate-900' : 'bg-zinc-900/50 text-zinc-400 border-transparent hover:text-zinc-300')
                             }`}
                           >
                             <div className="flex gap-0.5">
@@ -992,16 +1050,16 @@ export default function App() {
                       </div>
 
                       {/* Manual Custom Palette Editor */}
-                      <span className="text-[10px] text-zinc-500 block mb-2 uppercase tracking-wider mt-4">Manually Customize Accent Colors</span>
-                      <div className="space-y-3 bg-black/40 p-3 rounded-2xl border border-white/5">
+                      <span className={`text-[10px] block mb-2 uppercase tracking-wider mt-4 ${isLightMode ? 'text-slate-500' : 'text-zinc-500'}`}>Manually Customize Accent Colors</span>
+                      <div className={`space-y-3 p-3 rounded-2xl border ${isLightMode ? 'bg-slate-100/80 border-slate-200' : 'bg-black/40 border-white/5'}`}>
                         <div className="space-y-3">
                           {accentPalette.map((color, idx) => (
                             <div 
                               key={idx}
-                              className="bg-zinc-900/60 p-3 rounded-xl border border-white/5 space-y-2"
+                              className={`p-3 rounded-xl border space-y-2 ${isLightMode ? 'bg-white border-slate-200' : 'bg-zinc-900/60 border-white/5'}`}
                             >
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] uppercase font-mono font-bold text-zinc-400">Accent #{idx + 1}</span>
+                                <span className={`text-[10px] uppercase font-mono font-bold ${isLightMode ? 'text-slate-500' : 'text-zinc-400'}`}>Accent #{idx + 1}</span>
                                 {accentPalette.length > 1 && (
                                   <button
                                     onClick={() => {
@@ -1010,7 +1068,11 @@ export default function App() {
                                       setAccentPalette(updatedColors);
                                       setAccentPaletteName("Manual Set");
                                     }}
-                                    className="text-[10px] text-zinc-300 hover:text-red-400 px-2 py-0.5 rounded-lg border border-zinc-700/60 bg-zinc-800 hover:bg-zinc-750 active:scale-95 transition-all shadow-sm"
+                                    className={`text-[10px] px-2 py-0.5 rounded-lg border active:scale-95 transition-all shadow-sm ${
+                                      isLightMode 
+                                        ? 'text-red-600 hover:text-red-700 bg-red-50 border-red-200' 
+                                        : 'text-zinc-300 hover:text-red-400 bg-zinc-800 border-zinc-700/60'
+                                    }`}
                                     title="Remove color swatch"
                                   >
                                     Remove
@@ -1025,6 +1087,7 @@ export default function App() {
                                   setAccentPalette(updatedColors);
                                   setAccentPaletteName("Manual Set");
                                 }}
+                                isLightMode={isLightMode}
                               />
                             </div>
                           ))}
@@ -1037,7 +1100,11 @@ export default function App() {
                             setAccentPalette([...accentPalette, randomColor]);
                             setAccentPaletteName("Manual Set");
                           }}
-                          className="w-full text-center text-xs text-indigo-400 hover:text-indigo-300 border border-dashed border-indigo-500/30 hover:border-indigo-500/50 py-2 rounded-xl transition-all h-9 flex items-center justify-center gap-1.5"
+                          className={`w-full text-center text-xs border border-dashed py-2 rounded-xl transition-all h-9 flex items-center justify-center gap-1.5 ${
+                            isLightMode 
+                              ? 'text-indigo-600 hover:text-indigo-700 border-indigo-300 hover:border-indigo-400 bg-indigo-50/50' 
+                              : 'text-indigo-400 hover:text-indigo-300 border-indigo-500/30 hover:border-indigo-500/50'
+                          }`}
                         >
                           <span>+ Add Accent Color</span>
                         </button>
@@ -1048,53 +1115,45 @@ export default function App() {
               </div>
 
               {/* Background gradient customization panel */}
-              <div className="space-y-4 border-t border-white/5 pt-5">
+              <div className={`space-y-4 border-t pt-5 ${isLightMode ? 'border-slate-200' : 'border-white/5'}`}>
                 <div 
-                  onClick={() => {
-                    if (hapticsEnabled) vibrate('light');
-                    soundManager.play('swipe');
-                    setGradientExpanded(prev => !prev);
-                  }}
-                  className="flex items-center justify-between cursor-pointer select-none group py-1"
+                  className="flex items-center justify-between py-1 select-none"
                 >
-                  <div className="flex items-center gap-1.5 text-zinc-355 group-hover:text-white transition-colors">
-                    <Palette size={14} className="text-zinc-400 group-hover:text-white transition-colors" />
+                  <div className={`flex items-center gap-1.5 ${isLightMode ? 'text-slate-700' : 'text-zinc-350'}`}>
+                    <Palette size={14} className={isLightMode ? 'text-slate-500' : 'text-zinc-400'} />
                     <span className="text-xs font-semibold uppercase tracking-wider">Canvas gradient</span>
                   </div>
-                  {gradientExpanded ? (
-                    <ChevronUp size={14} className="text-zinc-500 group-hover:text-zinc-300 transition-colors" />
-                  ) : (
-                    <ChevronDown size={14} className="text-zinc-500 group-hover:text-zinc-300 transition-colors" />
-                  )}
+                  
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      if (hapticsEnabled) vibrate('medium');
+                      soundManager.play('swipe');
+                      const next = !gradientEnabled;
+                      setGradientEnabled(next);
+                      setGradientExpanded(next);
+                    }}
+                    className={`w-10 h-6 flex items-center rounded-full p-0.5 transition-all border ${
+                      gradientEnabled 
+                        ? 'bg-indigo-600 border-indigo-500' 
+                        : (isLightMode ? 'bg-slate-300 border-slate-400' : 'bg-zinc-800 border-zinc-700')
+                    }`}
+                    title={gradientEnabled ? "Disable Canvas Gradient" : "Enable Canvas Gradient"}
+                  >
+                    <div 
+                      className={`w-4 h-4 rounded-full shadow-sm transition-all bg-white ${
+                        gradientEnabled ? 'translate-x-4' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
                 </div>
 
-                {gradientExpanded && (
-                  <div className="space-y-3.5 bg-white/[0.01] p-3.5 rounded-2xl border border-white/5">
-                    {/* Toggle Canvas Gradient inside */}
-                    <div className="flex items-center justify-between pb-3 border-b border-white/5">
-                      <span className="text-xs text-zinc-400">Enable Canvas Gradient</span>
-                      <button 
-                        type="button"
-                        onClick={() => {
-                          if (hapticsEnabled) vibrate('medium');
-                          soundManager.play('swipe');
-                          setGradientEnabled(prev => !prev);
-                        }}
-                        className={`w-10 h-6 flex items-center rounded-full p-0.5 transition-all border ${
-                          gradientEnabled ? 'bg-indigo-500 border-indigo-400' : 'bg-zinc-800 border-zinc-700'
-                        }`}
-                        title={gradientEnabled ? "Disable Canvas Gradient" : "Enable Canvas Gradient"}
-                      >
-                        <div 
-                          className={`w-4 h-4 rounded-full shadow-sm transition-all bg-white ${
-                            gradientEnabled ? 'translate-x-4' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-
+                {gradientEnabled && (
+                  <div className={`space-y-3.5 p-3.5 rounded-2xl border ${
+                    isLightMode ? 'bg-white/80 border-slate-200 shadow-sm' : 'bg-white/[0.01] border-white/5'
+                  }`}>
                     {/* Linear / Radial Mode */}
-                    <div className="flex gap-1.5 bg-zinc-900/60 p-1 rounded-xl">
+                    <div className={`flex gap-1.5 p-1 rounded-xl ${isLightMode ? 'bg-slate-200/80' : 'bg-zinc-900/60'}`}>
                       <button
                         onClick={() => {
                           if (hapticsEnabled) vibrate('light');
@@ -1104,8 +1163,8 @@ export default function App() {
                         }}
                         className={`flex-1 text-center py-1.5 rounded-lg text-xs font-medium transition-colors ${
                           gradientType === 'linear' 
-                            ? 'bg-zinc-800 text-white shadow-sm' 
-                            : 'text-zinc-400 hover:text-white'
+                            ? (isLightMode ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'bg-zinc-800 text-white shadow-sm') 
+                            : (isLightMode ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-400 hover:text-white')
                         }`}
                       >
                         Linear Layout
@@ -1119,8 +1178,8 @@ export default function App() {
                         }}
                         className={`flex-1 text-center py-1.5 rounded-lg text-xs font-medium transition-colors ${
                           gradientType === 'radial' 
-                            ? 'bg-zinc-800 text-white shadow-sm' 
-                            : 'text-zinc-400 hover:text-white'
+                            ? (isLightMode ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'bg-zinc-800 text-white shadow-sm') 
+                            : (isLightMode ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-400 hover:text-white')
                         }`}
                       >
                         Radial Gradient
@@ -1131,8 +1190,8 @@ export default function App() {
                     {gradientType === 'linear' && (
                       <div>
                         <div className="flex justify-between items-center text-xs mb-1.5">
-                          <span className="text-zinc-400">Gradient Angle</span>
-                          <span className="text-zinc-200 font-mono font-bold">{gradientAngle}°</span>
+                          <span className={isLightMode ? 'text-slate-600' : 'text-zinc-400'}>Gradient Angle</span>
+                          <span className={`font-mono font-bold ${isLightMode ? 'text-slate-900' : 'text-zinc-200'}`}>{gradientAngle}°</span>
                         </div>
                         <input 
                           type="range" 
@@ -1143,18 +1202,20 @@ export default function App() {
                             setGradientAngle(Number(e.target.value));
                             setActivePreset(-1);
                           }}
-                          className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                          className={`w-full h-1 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                            isLightMode ? 'bg-slate-200' : 'bg-zinc-800'
+                          }`}
                         />
                       </div>
                     )}
 
                     {/* Radial Center position sliders */}
                     {gradientType === 'radial' && (
-                      <div className="space-y-3 pb-1 border-b border-white/5">
+                      <div className={`space-y-3 pb-1 border-b ${isLightMode ? 'border-slate-200' : 'border-white/5'}`}>
                         <div>
                           <div className="flex justify-between items-center text-xs mb-1.5">
-                            <span className="text-zinc-400">Radial Center X</span>
-                            <span className="text-zinc-200 font-mono font-bold">{radialCenterX}%</span>
+                            <span className={isLightMode ? 'text-slate-600' : 'text-zinc-400'}>Radial Center X</span>
+                            <span className={`font-mono font-bold ${isLightMode ? 'text-slate-900' : 'text-zinc-200'}`}>{radialCenterX}%</span>
                           </div>
                           <input 
                             type="range" 
@@ -1165,13 +1226,15 @@ export default function App() {
                               setRadialCenterX(Number(e.target.value));
                               setActivePreset(-1);
                             }}
-                            className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                            className={`w-full h-1 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                              isLightMode ? 'bg-slate-200' : 'bg-zinc-800'
+                            }`}
                           />
                         </div>
                         <div>
                           <div className="flex justify-between items-center text-xs mb-1.5">
-                            <span className="text-zinc-400">Radial Center Y</span>
-                            <span className="text-zinc-200 font-mono font-bold">{radialCenterY}%</span>
+                            <span className={isLightMode ? 'text-slate-600' : 'text-zinc-400'}>Radial Center Y</span>
+                            <span className={`font-mono font-bold ${isLightMode ? 'text-slate-900' : 'text-zinc-200'}`}>{radialCenterY}%</span>
                           </div>
                           <input 
                             type="range" 
@@ -1182,15 +1245,17 @@ export default function App() {
                               setRadialCenterY(Number(e.target.value));
                               setActivePreset(-1);
                             }}
-                            className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                            className={`w-full h-1 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                              isLightMode ? 'bg-slate-200' : 'bg-zinc-800'
+                            }`}
                           />
                         </div>
                       </div>
                     )}
 
                     {/* Three-Color Gradient Toggle */}
-                    <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                      <span className="text-xs text-zinc-400">Three-Color Gradient (via middle step)</span>
+                    <div className={`flex items-center justify-between border-b pb-3 ${isLightMode ? 'border-slate-200' : 'border-white/5'}`}>
+                      <span className={`text-xs ${isLightMode ? 'text-slate-600' : 'text-zinc-400'}`}>Three-Color Gradient (via middle step)</span>
                       <button 
                         type="button"
                         onClick={() => {
@@ -1200,11 +1265,13 @@ export default function App() {
                           setActivePreset(-1);
                         }}
                         className={`w-10 h-6 flex items-center rounded-full p-0.5 transition-all ${
-                          useThreeColors ? 'bg-indigo-500' : 'bg-zinc-800 border border-zinc-700'
+                          useThreeColors 
+                            ? 'bg-indigo-600 border-indigo-500' 
+                            : (isLightMode ? 'bg-slate-300 border-slate-400' : 'bg-zinc-800 border-zinc-700')
                         }`}
                       >
                         <div 
-                          className={`w-4 h-4 rounded-full bg-white shadow-sm transition-all ${
+                          className={`w-4 h-4 rounded-full shadow-sm transition-all bg-white ${
                             useThreeColors ? 'translate-x-4' : 'translate-x-0'
                           }`}
                         />
@@ -1214,7 +1281,7 @@ export default function App() {
                     {/* Gradient Color & Location Controls */}
                     <div className="space-y-4 pt-1">
                       {/* Start Gradient */}
-                      <div className="space-y-2 bg-black/20 p-2.5 rounded-xl border border-white/5">
+                      <div className={`space-y-2 p-2.5 rounded-xl border ${isLightMode ? 'bg-slate-100/90 border-slate-200' : 'bg-black/20 border-white/5'}`}>
                         <CustomColorPicker
                           color={gradientStart}
                           onChange={(newColor) => {
@@ -1222,9 +1289,10 @@ export default function App() {
                             setActivePreset(-1); // user customized
                           }}
                           label="Start Gradient Color"
+                          isLightMode={isLightMode}
                         />
                         <div>
-                          <div className="flex justify-between text-[10px] text-zinc-500 mb-1">
+                          <div className={`flex justify-between text-[10px] mb-1 ${isLightMode ? 'text-slate-500' : 'text-zinc-500'}`}>
                             <span>Start Position</span>
                             <span className="font-mono">{gradientStartStop}%</span>
                           </div>
@@ -1237,14 +1305,16 @@ export default function App() {
                               setGradientStartStop(Number(e.target.value));
                               setActivePreset(-1);
                             }}
-                            className="w-full h-1 bg-zinc-850 rounded-lg appearance-none cursor-pointer accent-indigo-400"
+                            className={`w-full h-1 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                              isLightMode ? 'bg-slate-300' : 'bg-zinc-850'
+                            }`}
                           />
                         </div>
                       </div>
 
                       {/* Middle Gradient */}
                       {useThreeColors && (
-                        <div className="space-y-2 bg-black/20 p-2.5 rounded-xl border border-white/5">
+                        <div className={`space-y-2 p-2.5 rounded-xl border ${isLightMode ? 'bg-slate-100/90 border-slate-200' : 'bg-black/20 border-white/5'}`}>
                           <CustomColorPicker
                             color={gradientMiddle}
                             onChange={(newColor) => {
@@ -1252,9 +1322,10 @@ export default function App() {
                               setActivePreset(-1); // user customized
                             }}
                             label="Middle Via Color"
+                            isLightMode={isLightMode}
                           />
                           <div>
-                            <div className="flex justify-between text-[10px] text-zinc-500 mb-1">
+                            <div className={`flex justify-between text-[10px] mb-1 ${isLightMode ? 'text-slate-500' : 'text-zinc-500'}`}>
                               <span>Middle Position</span>
                               <span className="font-mono">{gradientMiddleStop}%</span>
                             </div>
@@ -1267,14 +1338,16 @@ export default function App() {
                                 setGradientMiddleStop(Number(e.target.value));
                                 setActivePreset(-1);
                               }}
-                              className="w-full h-1 bg-zinc-850 rounded-lg appearance-none cursor-pointer accent-indigo-400"
+                              className={`w-full h-1 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                                isLightMode ? 'bg-slate-300' : 'bg-zinc-850'
+                              }`}
                             />
                           </div>
                         </div>
                       )}
 
                       {/* End Gradient */}
-                      <div className="space-y-2 bg-black/20 p-2.5 rounded-xl border border-white/5">
+                      <div className={`space-y-2 p-2.5 rounded-xl border ${isLightMode ? 'bg-slate-100/90 border-slate-200' : 'bg-black/20 border-white/5'}`}>
                         <CustomColorPicker
                           color={gradientEnd}
                           onChange={(newColor) => {
@@ -1282,9 +1355,10 @@ export default function App() {
                             setActivePreset(-1); // user customized
                           }}
                           label="End Gradient Color"
+                          isLightMode={isLightMode}
                         />
                         <div>
-                          <div className="flex justify-between text-[10px] text-zinc-500 mb-1">
+                          <div className={`flex justify-between text-[10px] mb-1 ${isLightMode ? 'text-slate-500' : 'text-zinc-500'}`}>
                             <span>End Position</span>
                             <span className="font-mono">{gradientEndStop}%</span>
                           </div>
@@ -1297,7 +1371,9 @@ export default function App() {
                               setGradientEndStop(Number(e.target.value));
                               setActivePreset(-1);
                             }}
-                            className="w-full h-1 bg-zinc-850 rounded-lg appearance-none cursor-pointer accent-indigo-400"
+                            className={`w-full h-1 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                              isLightMode ? 'bg-slate-300' : 'bg-zinc-850'
+                            }`}
                           />
                         </div>
                       </div>
@@ -1307,64 +1383,58 @@ export default function App() {
               </div>
 
               {/* Download and select resolution UI */}
-              <div className="space-y-4 border-t border-white/5 pt-5 pb-2">
-                <div 
-                  onClick={() => {
-                    if (hapticsEnabled) vibrate('light');
-                    soundManager.play('swipe');
-                    setExportExpanded(prev => !prev);
-                  }}
-                  className="flex items-center justify-between cursor-pointer select-none group py-1"
-                >
-                  <div className="flex items-center gap-1.5 text-zinc-350 group-hover:text-white transition-colors">
-                    <Maximize2 size={14} className="text-zinc-400 group-hover:text-white transition-colors" />
+              <div className={`space-y-4 border-t pt-5 pb-2 ${isLightMode ? 'border-slate-200' : 'border-white/5'}`}>
+                <div className="flex items-center justify-between py-1 select-none">
+                  <div className={`flex items-center gap-1.5 ${isLightMode ? 'text-slate-700' : 'text-zinc-350'}`}>
+                    <Maximize2 size={14} className={isLightMode ? 'text-slate-500' : 'text-zinc-400'} />
                     <span className="text-xs font-semibold uppercase tracking-wider">Export Size</span>
                   </div>
-                  {exportExpanded ? (
-                    <ChevronUp size={14} className="text-zinc-500 group-hover:text-zinc-300 transition-colors" />
-                  ) : (
-                    <ChevronDown size={14} className="text-zinc-500 group-hover:text-zinc-300 transition-colors" />
-                  )}
                 </div>
 
-                {exportExpanded && (
-                  <div className="space-y-3 bg-white/[0.01] p-3.5 rounded-2xl border border-white/5">
-                    <div className="text-[10px] text-zinc-450 block uppercase tracking-wider font-bold mb-1 px-0.5 select-none">
-                      Manually Input Size
-                    </div>
+                <div className={`space-y-3 p-3.5 rounded-2xl border ${
+                  isLightMode ? 'bg-white/80 border-slate-200 shadow-sm' : 'bg-white/[0.01] border-white/5'
+                }`}>
+                  <div className={`text-[10px] block uppercase tracking-wider font-bold mb-1 px-0.5 select-none ${
+                    isLightMode ? 'text-slate-600' : 'text-zinc-450'
+                  }`}>
+                    Manually Input Size
+                  </div>
 
-                    <div className="grid grid-cols-2 gap-3.5 pt-0.5">
-                      <div>
-                        <span className="text-[10px] text-zinc-500 mb-1 block uppercase tracking-wider">Width (px)</span>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          value={customWidth}
-                          onChange={(e) => setCustomWidth(e.target.value.replace(/\D/g, ''))}
-                          className="w-full bg-zinc-900 border border-white/5 p-2 rounded-xl text-xs text-white text-center font-mono focus:border-indigo-500 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-zinc-500 mb-1 block uppercase tracking-wider">Height (px)</span>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          value={customHeight}
-                          onChange={(e) => setCustomHeight(e.target.value.replace(/\D/g, ''))}
-                          className="w-full bg-zinc-900 border border-white/5 p-2 rounded-xl text-xs text-white text-center font-mono focus:border-indigo-500 focus:outline-none"
-                        />
-                      </div>
+                  <div className="grid grid-cols-2 gap-3.5 pt-0.5">
+                    <div>
+                      <span className={`text-[10px] mb-1 block uppercase tracking-wider ${isLightMode ? 'text-slate-500' : 'text-zinc-500'}`}>Width (px)</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={customWidth}
+                        onChange={(e) => setCustomWidth(e.target.value.replace(/\D/g, ''))}
+                        className={`w-full border p-2 rounded-xl text-xs text-center font-mono focus:border-indigo-500 focus:outline-none ${
+                          isLightMode ? 'bg-slate-50 border-slate-300 text-slate-900' : 'bg-zinc-900 border-white/5 text-white'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <span className={`text-[10px] mb-1 block uppercase tracking-wider ${isLightMode ? 'text-slate-500' : 'text-zinc-500'}`}>Height (px)</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={customHeight}
+                        onChange={(e) => setCustomHeight(e.target.value.replace(/\D/g, ''))}
+                        className={`w-full border p-2 rounded-xl text-xs text-center font-mono focus:border-indigo-500 focus:outline-none ${
+                          isLightMode ? 'bg-slate-50 border-slate-300 text-slate-900' : 'bg-zinc-900 border-white/5 text-white'
+                        }`}
+                      />
                     </div>
                   </div>
-                )}
+                </div>
               </div>
 
             </div>
 
-            {/* Bottom Button Actions */}
-            <div className="px-6 py-5 border-t border-white/5 bg-zinc-950 flex flex-col gap-2 shrink-0">
+            {/* Floating Frosted Download Button over the bottom */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 pt-2 pointer-events-none z-30 flex flex-col gap-2">
               {/* Success Notification Alert */}
               <AnimatePresence>
                 {showDownloadSuccess && (
@@ -1372,10 +1442,14 @@ export default function App() {
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-center gap-2.5 text-emerald-400 mb-1"
+                    className={`pointer-events-auto border-[0.5px] rounded-2xl p-3 flex items-center gap-2.5 mb-1 backdrop-blur-xl shadow-lg ${
+                      isLightMode 
+                        ? 'bg-emerald-50/90 border-emerald-600/30 text-emerald-950' 
+                        : 'bg-emerald-950/80 border-emerald-400/30 text-emerald-300'
+                    }`}
                   >
                     <CheckCircle size={14} className="shrink-0" />
-                    <span className="text-xs font-medium">Wallpaper downloaded successfully!</span>
+                    <span className="text-xs font-semibold">Wallpaper downloaded successfully!</span>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1383,11 +1457,15 @@ export default function App() {
               <button
                 onClick={triggerExport}
                 disabled={downloading}
-                className="w-full bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-500/40 text-white font-semibold py-3 px-4 rounded-2xl flex items-center justify-center gap-2 transition-colors active:scale-[0.99] disabled:cursor-not-allowed select-none text-xs"
+                className={`pointer-events-auto w-full font-semibold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:cursor-not-allowed select-none text-xs backdrop-blur-xl border-[0.5px] shadow-xl ${
+                  isLightMode
+                    ? 'bg-white/70 hover:bg-white/90 text-slate-950 border-black/20 shadow-black/5 disabled:bg-white/40'
+                    : 'bg-black/60 hover:bg-black/80 text-white border-white/25 shadow-black/40 disabled:bg-black/30'
+                }`}
               >
                 {downloading ? (
                   <>
-                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <svg className={`animate-spin h-4 w-4 ${isLightMode ? 'text-black' : 'text-white'}`} fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>

@@ -64,7 +64,7 @@ export function BackgroundMaze({
   scale3D = 100,
   perspectiveActive = false,
   gradientEnabled = false,
-  bgColor = "#0a0a0c",
+  bgColor = "#f8fafc",
   glowSpread = 0.4,
 }: BackgroundMazeProps) {
   const [windowSize, setWindowSize] = useState({ 
