@@ -148,8 +148,13 @@ export function BackgroundMaze({
     const random = createSeededRandom(seed + 100);
 
     segments.forEach((seg) => {
-      if (accentProbability > 0 && random() < accentProbability && accentPalette.length > 0) {
-        const color = accentPalette[Math.floor(random() * accentPalette.length)];
+      const probRoll = random();
+      const colorRoll = random();
+
+      if (accentProbability > 0 && probRoll < accentProbability && accentPalette.length > 0) {
+        const colorIdx = Math.floor(colorRoll * 120) % accentPalette.length;
+        const color = accentPalette[colorIdx];
+        if (!accentPaths[color]) accentPaths[color] = [];
         accentPaths[color].push(seg.d);
       } else {
         defaultPaths.push(seg.d);

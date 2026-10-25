@@ -1,7 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { BackgroundMaze } from './components/BackgroundMaze';
-import { CustomColorPicker } from './components/CustomColorPicker';
+import { CustomColorPicker, parseColor, formatColor } from './components/CustomColorPicker';
 import { generateMaze, createSeededRandom } from './utils/maze';
+
+function getDarkerVariant(colorStr: string, factor = 0.65): string {
+  const p = parseColor(colorStr);
+  if (p.a === 0) return '#0f172a';
+  const r = Math.max(0, Math.round(p.r * factor));
+  const g = Math.max(0, Math.round(p.g * factor));
+  const b = Math.max(0, Math.round(p.b * factor));
+  return formatColor(r, g, b, p.a);
+}
 import { soundManager } from './utils/sounds';
 import { vibrate } from './utils/vibrate';
 import { motion, AnimatePresence } from 'motion/react';
@@ -25,7 +34,8 @@ import {
   ChevronDown,
   ChevronUp,
   Sun,
-  Moon
+  Moon,
+  ImageOff
 } from 'lucide-react';
 
 interface Preset {
@@ -154,8 +164,8 @@ export default function App() {
   const setActivePreset = (_: number) => {}; // dummy helper for backwards compatibility with input callbacks
 
   // Gradient state
-  const [gradientStart, setGradientStart] = useState("#1a1a1a");
-  const [gradientEnd, setGradientEnd] = useState("#0a0a0a");
+  const [gradientStart, setGradientStart] = useState("#f8fafc");
+  const [gradientEnd, setGradientEnd] = useState("#94a3b8");
   const [gradientAngle, setGradientAngle] = useState(135);
   const [gradientType, setGradientType] = useState<'linear' | 'radial'>('linear');
   const [gradientEnabled, setGradientEnabled] = useState(false);
@@ -253,13 +263,11 @@ export default function App() {
     soundManager.play('swipe');
     setAccentPaletteName(palette.name);
     setAccentPalette(palette.colors);
-    if (accentsEnabled) {
-      setSeed(s => s + 1); // recalculate colors
-    }
   };
 
   // Safe canvas generation of selected resolutions
-  const triggerExport = useCallback(async () => {
+  const triggerExport = useCallback(async (transparentBgParam?: boolean | React.MouseEvent) => {
+    const isTransparentExport = typeof transparentBgParam === 'boolean' ? transparentBgParam : false;
     setDownloading(true);
     if (hapticsEnabled) vibrate('success');
     soundManager.play('swipe');
@@ -293,50 +301,56 @@ export default function App() {
       // Set up anti-aliasing
       ctx.imageSmoothingEnabled = true;
 
-      // Draw background gradient
-      if (!gradientEnabled) {
-        ctx.fillStyle = bgColor;
-      } else if (gradientType === 'radial') {
-        const rcx = (radialCenterX / 100) * width;
-        const rcy = (radialCenterY / 100) * height;
-        const rMax = Math.max(width, height);
-        const grad = ctx.createRadialGradient(rcx, rcy, 0, rcx, rcy, rMax);
-        
-        const stopsList = [
-          { offset: gradientStartStop / 100, color: gradientStart },
-          ...(useThreeColors ? [{ offset: gradientMiddleStop / 100, color: gradientMiddle }] : []),
-          { offset: gradientEndStop / 100, color: gradientEnd }
-        ];
-        stopsList.sort((a, b) => a.offset - b.offset);
-        stopsList.forEach(s => {
-          const clamped = Math.max(0, Math.min(1, s.offset));
-          grad.addColorStop(clamped, s.color);
-        });
-        ctx.fillStyle = grad;
-      } else {
-        const rad = (gradientAngle * Math.PI) / 180;
-        const r = Math.sqrt(width**2 + height**2) / 2;
-        const cx = width / 2;
-        const cy = height / 2;
-        const x0 = cx - Math.cos(rad) * r;
-        const y0 = cy - Math.sin(rad) * r;
-        const x1 = cx + Math.cos(rad) * r;
-        const y1 = cy + Math.sin(rad) * r;
+      const isTransparent = isTransparentExport || bgColor === 'transparent';
 
-        const grad = ctx.createLinearGradient(x0, y0, x1, y1);
-        const stopsList = [
-          { offset: gradientStartStop / 100, color: gradientStart },
-          ...(useThreeColors ? [{ offset: gradientMiddleStop / 100, color: gradientMiddle }] : []),
-          { offset: gradientEndStop / 100, color: gradientEnd }
-        ];
-        stopsList.sort((a, b) => a.offset - b.offset);
-        stopsList.forEach(s => {
-          const clamped = Math.max(0, Math.min(1, s.offset));
-          grad.addColorStop(clamped, s.color);
-        });
-        ctx.fillStyle = grad;
+      if (!isTransparent) {
+        // Draw background gradient
+        if (!gradientEnabled) {
+          ctx.fillStyle = bgColor;
+        } else if (gradientType === 'radial') {
+          const rcx = (radialCenterX / 100) * width;
+          const rcy = (radialCenterY / 100) * height;
+          const rMax = Math.max(width, height);
+          const grad = ctx.createRadialGradient(rcx, rcy, 0, rcx, rcy, rMax);
+          
+          const stopsList = [
+            { offset: gradientStartStop / 100, color: gradientStart },
+            ...(useThreeColors ? [{ offset: gradientMiddleStop / 100, color: gradientMiddle }] : []),
+            { offset: gradientEndStop / 100, color: gradientEnd }
+          ];
+          stopsList.sort((a, b) => a.offset - b.offset);
+          stopsList.forEach(s => {
+            const clamped = Math.max(0, Math.min(1, s.offset));
+            grad.addColorStop(clamped, s.color);
+          });
+          ctx.fillStyle = grad;
+        } else {
+          const rad = (gradientAngle * Math.PI) / 180;
+          const r = Math.sqrt(width**2 + height**2) / 2;
+          const cx = width / 2;
+          const cy = height / 2;
+          const x0 = cx - Math.cos(rad) * r;
+          const y0 = cy - Math.sin(rad) * r;
+          const x1 = cx + Math.cos(rad) * r;
+          const y1 = cy + Math.sin(rad) * r;
+
+          const grad = ctx.createLinearGradient(x0, y0, x1, y1);
+          const stopsList = [
+            { offset: gradientStartStop / 100, color: gradientStart },
+            ...(useThreeColors ? [{ offset: gradientMiddleStop / 100, color: gradientMiddle }] : []),
+            { offset: gradientEndStop / 100, color: gradientEnd }
+          ];
+          stopsList.sort((a, b) => a.offset - b.offset);
+          stopsList.forEach(s => {
+            const clamped = Math.max(0, Math.min(1, s.offset));
+            grad.addColorStop(clamped, s.color);
+          });
+          ctx.fillStyle = grad;
+        }
+        ctx.fillRect(0, 0, width, height);
+      } else {
+        ctx.clearRect(0, 0, width, height);
       }
-      ctx.fillRect(0, 0, width, height);
 
       // Coordinate translators matching BackgroundMaze logic mathematically to prevent any squishing
       const scaleX = width / baseCols;
@@ -416,8 +430,12 @@ export default function App() {
       const random = createSeededRandom(seed + 100);
 
       const addWall = (x1: number, y1: number, x2: number, y2: number) => {
-        if (effectiveAccentProbability > 0 && random() < effectiveAccentProbability && accentPalette.length > 0) {
-          const color = accentPalette[Math.floor(random() * accentPalette.length)];
+        const probRoll = random();
+        const colorRoll = random();
+        if (effectiveAccentProbability > 0 && probRoll < effectiveAccentProbability && accentPalette.length > 0) {
+          const colorIdx = Math.floor(colorRoll * 120) % accentPalette.length;
+          const color = accentPalette[colorIdx];
+          if (!accentWalls[color]) accentWalls[color] = [];
           accentWalls[color].push({ x1, y1, x2, y2 });
         } else {
           defaultWalls.push({ x1, y1, x2, y2 });
@@ -563,7 +581,9 @@ export default function App() {
         const blobUrl = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
         anchor.href = blobUrl;
-        anchor.download = `escape_maze_${width}x${height}_wallpaper.png`;
+        anchor.download = isTransparent
+          ? `escape_maze_${width}x${height}_transparent.png`
+          : `escape_maze_${width}x${height}_wallpaper.png`;
         document.body.appendChild(anchor);
         anchor.click();
         document.body.removeChild(anchor);
@@ -1132,6 +1152,11 @@ export default function App() {
                       const next = !gradientEnabled;
                       setGradientEnabled(next);
                       setGradientExpanded(next);
+                      if (next) {
+                        // Keep present color set by user and set a slight dark variant
+                        setGradientStart(bgColor);
+                        setGradientEnd(getDarkerVariant(bgColor));
+                      }
                     }}
                     className={`w-10 h-6 flex items-center rounded-full p-0.5 transition-all border ${
                       gradientEnabled 
@@ -1455,7 +1480,7 @@ export default function App() {
               </AnimatePresence>
 
               <button
-                onClick={triggerExport}
+                onClick={() => triggerExport()}
                 disabled={downloading}
                 className={`pointer-events-auto w-full font-semibold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:cursor-not-allowed select-none text-xs backdrop-blur-xl border-[0.5px] shadow-xl ${
                   isLightMode
